@@ -1,10 +1,21 @@
-import React, { useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { assets, Filters } from "../assets/assets";
+import { ShopContext } from "../context/ShopContext";
 
 function Filter() {
   const [showFilter, setShowFilter] = useState(false);
+  const { filter, setFilter } = useContext(ShopContext);
 
-  const toggleCategory = () => {};
+  const toggleCategory = (e, name) => {
+    let cat = structuredClone(filter);
+    if (e.target.checked) {
+      cat[name].push(e.target.value);
+    } else {
+      cat[name].splice(e.target.value, 1);
+    }
+    setFilter(cat);
+  };
+
   return (
     <div>
       <p
@@ -34,7 +45,7 @@ function Filter() {
                   type="checkbox"
                   className="w-3"
                   value={option}
-                  onChange={toggleCategory}
+                  onChange={(event) => toggleCategory(event, filter.name)}
                 />
                 <span>{option}</span>
               </p>

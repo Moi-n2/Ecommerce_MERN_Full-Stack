@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { SortTypes } from "../assets/assets";
+import { ShopContext } from "../context/ShopContext";
 
 function Sort() {
-  const [sortType, setSortType] = useState("");
+  const { setSortType } = useContext(ShopContext);
 
   return (
     <select

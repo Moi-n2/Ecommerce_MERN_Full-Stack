@@ -7,9 +7,16 @@ import ProductItem from "../components/ProductItem";
 import Pagination from "rc-pagination";
 import { ShopContext } from "@/context/ShopContext";
 
+const size = 20;
+
 function Collection() {
-  const { productData, currentPage, onPageChange, listRef } =
-    useContext(ShopContext);
+  const {
+    productData,
+    currentPageProducts,
+    setCurrentPage,
+    currentPage,
+    listRef,
+  } = useContext(ShopContext);
 
   return (
     <div className="flex flex-col gap-1 sm:gap-10 border-t" ref={listRef}>
@@ -24,15 +31,16 @@ function Collection() {
 
           <div className="my-4 flex gap-5 flex-col">
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 gap-y-6">
-              {productData?.map((item) => (
+              {currentPageProducts?.map((item) => (
                 <ProductItem item={item} key={item._id} />
               ))}
             </div>
             <Pagination
               className="self-end"
-              onChange={onPageChange}
+              onChange={setCurrentPage}
               current={currentPage}
-              total={25}
+              pageSize={size}
+              total={productData?.length}
             />
           </div>
         </div>

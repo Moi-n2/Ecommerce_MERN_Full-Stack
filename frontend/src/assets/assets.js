@@ -805,11 +805,11 @@ export const ourPolicy = [
 
 export const Filters = [
   {
-    name: "categories",
+    name: "category",
     option: ["men", "women", "kids"],
   },
   {
-    name: "type",
+    name: "subCategory",
     option: ["topwear", "bottomwear", "winterwear"],
   },
 ];

@@ -2,28 +2,9 @@ import React, { useState } from "react";
 import Title from "./Title";
 import InputField from "./InputField";
 
-function Address() {
-  const [formDate, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    street: "",
-    city: "",
-    state: "",
-    zipcode: "",
-    country: "",
-    phone: "",
-  });
-  const onSubmit = (e) => {
-    e.preventDefault();
-  };
-  const onChange = () => {};
-
+function Address({ address, setAddress }) {
   return (
-    <form
-      onSubmit={onSubmit}
-      className="flex flex-col sm:flex-row justify-between gap-4 min:h[80vh] "
-    >
+    <div className="flex flex-col sm:flex-row justify-between gap-4 min:h[80vh] ">
       <div className="flex flex-col gap-4 w-full sm:max-w-[480px]">
         <div className="text-xl sm:text-2xl flex justify-start">
           <Title text1={"DELIVERY"} text2={"INFORMATION"} />
@@ -31,74 +12,82 @@ function Address() {
 
         <div className="flex gap-3">
           <InputField
-            onChange={onChange}
+            onChange={(e) =>
+              setAddress({ ...address, firstName: e.target.value })
+            }
             type="text"
-            value={formDate.firstName}
+            value={address.firstName}
             placeholder="First-Name"
             required={true}
           />
           <InputField
-            onChange={onChange}
+            onChange={(e) =>
+              setAddress({ ...address, lastName: e.target.value })
+            }
             type="text"
             placeholder="Last-Name"
-            value={formDate.lastName}
+            value={address.lastName}
             required={true}
           />
         </div>
 
         <InputField
-          onChange={onChange}
+          onChange={(e) => setAddress({ ...address, email: e.target.value })}
           type="email"
           placeholder="Email-address"
-          value={formDate.email}
+          value={address.email}
           required={true}
         />
         <InputField
-          onChange={onChange}
+          onChange={(e) => setAddress({ ...address, street: e.target.value })}
           type="text"
           placeholder="Street"
-          value={formDate.street}
+          value={address.street}
           required={true}
         />
         <InputField
-          onChange={onChange}
+          onChange={(e) => setAddress({ ...address, city: e.target.value })}
           type="text"
           placeholder="City"
-          value={formDate.city}
+          value={address.city}
           required={true}
         />
         <InputField
-          onChange={onChange}
+          onChange={(e) => setAddress({ ...address, state: e.target.value })}
           type="text"
           placeholder="State"
-          value={formDate.state}
+          value={address.state}
           required={true}
         />
         <div className="flex gap-3">
           <InputField
-            onChange={onChange}
-            type="number"
+            onChange={(e) =>
+              setAddress({ ...address, zipcode: e.target.value })
+            }
+            type="string"
             placeholder="Zipcode"
-            value={formDate.zipcode}
+            value={address.zipcode}
             required={true}
           />
           <InputField
-            onChange={onChange}
+            onChange={(e) =>
+              setAddress({ ...address, country: e.target.value })
+            }
             type="text"
             placeholder="Country"
-            value={formDate.country}
+            value={address.country}
             required={true}
           />
         </div>
         <InputField
-          onChange={onChange}
-          type="number"
+          onChange={(e) => setAddress({ ...address, phone: e.target.value })}
+          type="string"
           placeholder="Phone"
-          value={formDate.phone}
+          value={address.phone}
           required={true}
         />
       </div>
-    </form>
+    </div>
   );
 }
 

@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { assets } from "@/assets/assets";
+import { ShopContext } from "../context/ShopContext";
 
 function NavBar() {
   const [visible, setVisible] = useState(false);
+  const { token, navigate, logout, totalQty } = useContext(ShopContext);
+
   return (
     <div className="flex items-center justify-between py-5 font-medium">
       <Link to="/">
@@ -38,22 +41,39 @@ function NavBar() {
             className="w-5 cursor-pointer"
           />
           <div className="group-hover:block hidden absolute left-[-20px] pt-4 bg-slate-100/65 text-gray-500 rounded w-28 py-3 px-5 space-y-2 underline-offset-4">
-            <p className="cursor-pointer hover:text-black hover:underline">
-              My profile
-            </p>
-            <p className="cursor-pointer hover:text-black hover:underline">
-              Orders
-            </p>
-            <p className="cursor-pointer hover:text-black hover:underline">
-              Logout
-            </p>
+            {token ? (
+              <>
+                <p className="cursor-pointer hover:text-black hover:underline">
+                  My profile
+                </p>
+                <p
+                  className="cursor-pointer hover:text-black hover:underline"
+                  onClick={() => navigate("/orders")}
+                >
+                  Orders
+                </p>
+                <p
+                  className="cursor-pointer hover:text-black hover:underline"
+                  onClick={logout}
+                >
+                  Logout
+                </p>
+              </>
+            ) : (
+              <p
+                className="cursor-pointer hover:text-black hover:underline"
+                onClick={() => navigate("/login")}
+              >
+                Login
+              </p>
+            )}
           </div>
         </div>
 
         <Link to="/cart" className="relative">
           <img src={assets.cart_icon} className="w-5 min-w-5" alt="cart" />
           <p className="absolute right-[-5px] bottom-[8px] w-4 text-center leading-4 bg-black text-white aspect-square rounded-full text-[8px]">
-            5
+            {totalQty}
           </p>
         </Link>
 

@@ -4,13 +4,16 @@ import { ShopContext } from "../context/ShopContext";
 import { assets } from "../assets/assets";
 import ProductItem from "../components/ProductItem";
 import Title from "../components/Title";
+import { toast } from "react-toastify";
+import { post } from "../lib/axios.js";
 
 function Product() {
   const { productId } = useParams();
   const [product, setProduct] = useState([]);
   const [relatedproducts, setRelatedProducts] = useState([]);
   const [size, setSize] = useState("");
-  const { fetchItemData, currency, getRelatedItems } = useContext(ShopContext);
+  const { fetchItemData, currency, getRelatedItems, updateCart } =
+    useContext(ShopContext);
 
   const [image, setImage] = useState();
   useEffect(() => {
@@ -21,7 +24,18 @@ function Product() {
     setRelatedProducts(relatedItems);
   }, [productId, fetchItemData, getRelatedItems]);
 
-  const addToCart = () => {};
+  const addToCart = async (productId, size) => {
+    const data = {
+      productId,
+      size,
+    };
+    try {
+      const res = await post("/api/cart/update", data);
+      toast.success(res.message);
+    } catch (error) {
+      toast.error(error);
+    }
+  };
   return (
     <div className="border-t-2 space-y-10 pt-10">
       <div className="flex gap-2 sm:gap-12 flex-col sm:flex-row xl:h-[40vw]">

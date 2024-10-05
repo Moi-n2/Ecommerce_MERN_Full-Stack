@@ -1,20 +1,72 @@
-import React, { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import Title from "../components/Title";
 import { ShopContext } from "../context/ShopContext";
 import CartItem from "../components/CartItem";
 import { useNavigate } from "react-router-dom";
 import Address from "../components/Address";
 import { assets } from "../assets/assets";
+import { get, post } from "../lib/axios";
+import { toast } from "react-toastify";
 
 function Cart() {
-  const { currency } = useContext(ShopContext);
-  const { cartItems } = useContext(ShopContext);
+  const { currency, cartItems, setCartItems, delivery_fee, totalQty } =
+    useContext(ShopContext);
   const [payMethod, setPayMethod] = useState("cod");
-  const navigate = useNavigate();
+  const [total, setTotal] = useState(0);
+  const [address, setAddress] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    street: "",
+    city: "",
+    state: "",
+    zipcode: "",
+    country: "",
+    phone: "",
+  });
+  useEffect(() => {
+    fetchCart();
+  }, []);
 
-  // const setPayMethod = (val) => {
-  //   console.log(val);
-  // };
+  useEffect(() => {
+    const total = cartItems.reduce((acc, curr) => {
+      return acc + curr.quantity * curr.product.price;
+    }, 0);
+    setTotal(total);
+  }, [cartItems, delivery_fee]);
+
+  const fetchCart = async () => {
+    try {
+      const res = await get("/api/cart/");
+      setCartItems(res.data);
+    } catch (error) {
+      toast.error(error);
+    }
+  };
+
+  const checkOut = async () => {
+    let url = "/api/order/placeByCod";
+    if (payMethod === "stripe") {
+      url = "/api/order/placeByStripe";
+    }
+    const data = {
+      items: cartItems.map((item) => ({
+        product: item.product,
+        quantity: item.quantity,
+        size: item.size,
+        price: item.product.price,
+      })),
+      totalQty: totalQty,
+      totalPayment: total,
+      address: address,
+    };
+    try {
+      const res = await post(url, data);
+      toast.success(res.message);
+    } catch (error) {
+      toast.error(error);
+    }
+  };
   return (
     <div className="border-t pt-14">
       <div className="text-2xl mb-3 flex justify-start items-center">
@@ -22,14 +74,14 @@ function Cart() {
       </div>
 
       <div>
-        {cartItems?.map((item, index) => (
-          <CartItem item={item} key={index} />
+        {cartItems?.map((item) => (
+          <CartItem item={item} key={item._id} />
         ))}
       </div>
 
       <div className="flex my-20 gap-10 flex-col sm:flex-row">
         <div className="flex-1">
-          <Address />
+          <Address address={address} setAddress={setAddress} />
         </div>
 
         <div className="flex-1">
@@ -41,20 +93,23 @@ function Cart() {
               <div className="flex justify-between">
                 <p>Subtotal</p>
                 <p>
-                  {currency} {1111}
+                  {currency} {total}
                 </p>
               </div>
               <hr />
               <div className="flex justify-between">
                 <p>Shipping Fee</p>
                 <p>
-                  {currency} {10}
+                  {currency} {delivery_fee}
                 </p>
               </div>
               <hr />
               <div className="flex justify-between">
                 <b>Total</b>
-                <b>{currency}1120</b>
+                <b>
+                  {currency}
+                  {total + delivery_fee}
+                </b>
               </div>
             </div>
           </div>
@@ -73,14 +128,14 @@ function Cart() {
               >
                 <img className="h-5 mx-4" src={assets.stripe_logo} alt="" />
               </div>
-              <div
+              {/* <div
                 onClick={() => setPayMethod("razorpay")}
                 className={`flex items-center gap-3 border p-2 px-3 cursor-pointer ${
                   payMethod === "razorpay" ? "primary-color" : ""
                 }`}
               >
                 <img className="h-5 mx-4" src={assets.razorpay_logo} alt="" />
-              </div>
+              </div> */}
 
               <div
                 onClick={() => setPayMethod("cod")}
@@ -95,7 +150,7 @@ function Cart() {
             </div>
             <div className="w-full text-end mt-8">
               <button
-                onClick={() => navigate("/place-order")}
+                onClick={checkOut}
                 className="bg-black text-white text-sm my-8 px-8 py-3"
               >
                 PROCEED TO CHECKOUT

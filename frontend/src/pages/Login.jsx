@@ -1,15 +1,48 @@
-import React, { useState } from "react";
+import { useContext, useState } from "react";
 import InputField from "../components/InputField";
+import { post } from "../lib/axios";
+import { toast } from "react-toastify";
+import { ShopContext } from "../context/ShopContext";
 
 function Login() {
-  const [currentState, setCurrentState] = useState("Login");
+  const [currentState, setCurrentState] = useState("login");
+  const { navigate, setToken } = useContext(ShopContext);
   const [loginData, setLoginData] = useState({
     name: "",
     email: "",
     password: "",
   });
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
+    try {
+      if (currentState === "sign-up") {
+        const res = await post("/api/user/signup", loginData);
+        console.log(res);
+        toast.success(res.message);
+        localStorage.setItem("token", JSON.stringify(res.token));
+        setToken(res.token);
+        navigate("/");
+      }
+
+      if (currentState === "login") {
+        const res = await post("/api/user/login", loginData);
+        toast.success(res.message);
+        localStorage.setItem("token", JSON.stringify(res.token));
+        setToken(res.token);
+        navigate("/");
+      }
+    } catch (error) {
+      toast.error(error);
+    }
+  };
+
+  const toggleState = (state) => {
+    setCurrentState(state);
+    setLoginData({
+      name: "",
+      email: "",
+      password: "",
+    });
   };
   return (
     <form
@@ -21,7 +54,7 @@ function Login() {
         <hr className="border-none h-[1.5px] w-8 bg-gray-800" />
       </div>
 
-      {currentState === "signup" && (
+      {currentState === "sign-up" && (
         <InputField
           onChange={(e) => setLoginData({ ...loginData, name: e.target.value })}
           value={loginData.name}
@@ -53,24 +86,24 @@ function Login() {
           <>
             <p className="cursor-pointer">Forgot password?</p>
             <p
-              onClick={() => setCurrentState("signup")}
+              onClick={() => toggleState("sign-up")}
               className="cursor-pointer"
             >
               Create account
             </p>
           </>
         ) : (
-          <p
-            onClick={() => setCurrentState("login")}
-            className="cursor-pointer"
-          >
+          <p onClick={() => toggleState("login")} className="cursor-pointer">
             Login Here
           </p>
         )}
       </div>
 
-      <button className="bg-black text-white font-light px-8 py-2 mt-4">
-        {currentState === "login" ? "Sign In" : "Sign Up"}
+      <button
+        className="bg-black text-white font-light px-8 py-2 mt-4"
+        onClick={onSubmit}
+      >
+        {currentState === "login" ? "Log In" : "Sign Up"}
       </button>
     </form>
   );

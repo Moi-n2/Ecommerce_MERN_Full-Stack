@@ -6,33 +6,83 @@ import { ShopContext } from "../context/ShopContext";
 
 function Login() {
   const [currentState, setCurrentState] = useState("login");
-  const { navigate, setToken } = useContext(ShopContext);
+  const { navigate, setAccessToken, setRefreshToken } = useContext(ShopContext);
   const [loginData, setLoginData] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     password: "",
   });
+  const [isSubmiting, setIsSubmiting] = useState(false);
+  const validateForm = () => {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z]).{6,}$/;
+    const isInvalid = ["firstName", "lastName", "email", "password"].some(
+      (item) => {
+        if (!loginData[item]) {
+          toast.warning(`Please enter ${item}`);
+          return true;
+        }
+        return false;
+      }
+    );
+    if (isInvalid) {
+      return false;
+    }
+    if (!emailRegex.test(loginData.email)) {
+      toast.warning(`Invalid email address`);
+
+      return false;
+    }
+
+    if (!passwordRegex.test(loginData.password)) {
+      toast.warning(
+        `Password must be at least 6 characters long. It contains both uppercase and lowercase letters.`
+      );
+      return false;
+    }
+
+    return true;
+  };
   const onSubmit = async (e) => {
     e.preventDefault();
+
     try {
       if (currentState === "sign-up") {
-        const res = await post("/api/user/signup", loginData);
-        console.log(res);
-        toast.success(res.message);
-        localStorage.setItem("token", JSON.stringify(res.token));
-        setToken(res.token);
-        navigate("/");
+        const test = validateForm();
+        if (!test) return;
+        setIsSubmiting(true);
+        const res = await post("/sign-up", loginData);
+        console.log("res:", res);
+
+        if (res.success) {
+          toast.success(res.message);
+          localStorage.setItem("activation_token", res.data.activationToken);
+          navigate("/verify-code");
+        }
       }
 
       if (currentState === "login") {
-        const res = await post("/api/user/login", loginData);
+        setIsSubmiting(true);
+        const res = await post("/login", loginData);
         toast.success(res.message);
-        localStorage.setItem("token", JSON.stringify(res.token));
-        setToken(res.token);
+        localStorage.setItem(
+          "access_token",
+          JSON.stringify(res.data.access_token)
+        );
+        localStorage.setItem(
+          "refresh_token",
+          JSON.stringify(res.data.refresh_token)
+        );
+        setAccessToken(res.data.access_token);
+        setRefreshToken(res.data.refresh_token);
         navigate("/");
       }
+
+      setIsSubmiting(false);
     } catch (error) {
       toast.error(error);
+      setIsSubmiting(false);
     }
   };
 
@@ -44,6 +94,7 @@ function Login() {
       password: "",
     });
   };
+
   return (
     <form
       onSubmit={onSubmit}
@@ -55,13 +106,28 @@ function Login() {
       </div>
 
       {currentState === "sign-up" && (
-        <InputField
-          onChange={(e) => setLoginData({ ...loginData, name: e.target.value })}
-          value={loginData.name}
-          type="text"
-          placeholder="Name"
-          required={true}
-        />
+        <div className="flex flex-row gap-2 w-full">
+          <input
+            className={`border border-gray-300 rounded py-1.5 px-3.5 w-full flex justify-between flex-1`}
+            onChange={(e) =>
+              setLoginData({ ...loginData, firstName: e.target.value })
+            }
+            value={loginData.firstName}
+            type="text"
+            placeholder="FirstName"
+            required={true}
+          />
+          <input
+            className={`border border-gray-300 rounded py-1.5 px-3.5 w-full flex justify-between flex-1`}
+            onChange={(e) =>
+              setLoginData({ ...loginData, lastName: e.target.value })
+            }
+            value={loginData.lastName}
+            type="text"
+            placeholder="LastName"
+            required={true}
+          />
+        </div>
       )}
 
       <InputField
@@ -102,6 +168,7 @@ function Login() {
       <button
         className="bg-black text-white font-light px-8 py-2 mt-4"
         onClick={onSubmit}
+        disabled={isSubmiting}
       >
         {currentState === "login" ? "Log In" : "Sign Up"}
       </button>

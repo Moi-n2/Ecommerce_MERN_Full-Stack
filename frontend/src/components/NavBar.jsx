@@ -5,7 +5,7 @@ import { ShopContext } from "../context/ShopContext";
 
 function NavBar() {
   const [visible, setVisible] = useState(false);
-  const { token, navigate, logout, totalQty } = useContext(ShopContext);
+  const { isAuthorized, navigate, logout, totalQty } = useContext(ShopContext);
 
   return (
     <div className="flex items-center justify-between py-5 font-medium">
@@ -41,11 +41,8 @@ function NavBar() {
             className="w-5 cursor-pointer"
           />
           <div className="group-hover:block hidden absolute left-[-20px] pt-4 bg-slate-100/65 text-gray-500 rounded w-28 py-3 px-5 space-y-2 underline-offset-4">
-            {token ? (
+            {isAuthorized ? (
               <>
-                <p className="cursor-pointer hover:text-black hover:underline">
-                  My profile
-                </p>
                 <p
                   className="cursor-pointer hover:text-black hover:underline"
                   onClick={() => navigate("/orders")}

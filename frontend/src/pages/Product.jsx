@@ -12,26 +12,28 @@ function Product() {
   const [product, setProduct] = useState([]);
   const [relatedproducts, setRelatedProducts] = useState([]);
   const [size, setSize] = useState("");
-  const { fetchItemData, currency, getRelatedItems, updateCart } =
+  const { fetchItemData, currency, getRelatedItems, setUser } =
     useContext(ShopContext);
 
   const [image, setImage] = useState();
   useEffect(() => {
     const res = fetchItemData(productId) || [];
     setProduct(res);
-    setImage(() => res.image[0]);
+    setImage(() => res.image?.[0]);
     const relatedItems = getRelatedItems(res.category, res.subCategory);
     setRelatedProducts(relatedItems);
   }, [productId, fetchItemData, getRelatedItems]);
 
-  const addToCart = async (productId, size) => {
+  const addToCart = async () => {
     const data = {
-      productId,
+      product,
       size,
     };
+    if (!size) return toast.warning("Please select size!");
     try {
-      const res = await post("/api/cart/update", data);
+      const res = await post("/cart/update", data);
       toast.success(res.message);
+      setUser(res.data);
     } catch (error) {
       toast.error(error);
     }
@@ -43,7 +45,7 @@ function Product() {
           <div className="flex xl:flex-col overflow-x-auto xl:overflow-y-scroll xl:justify-between normal xl:w-[18.7%] w-full gap-2 xl:h-[75%] h-auto">
             {product?.image?.map((item, index) => (
               <img
-                src={item}
+                src={item.url}
                 alt="image"
                 key={index}
                 className="w-[24%] xl:w-full object-contain cursor-pointer"
@@ -53,7 +55,7 @@ function Product() {
           </div>
 
           <div className="w-full">
-            <img src={image} alt="" className="object-contain w-full" />
+            <img src={image?.url} alt="" className="object-contain w-full" />
           </div>
         </div>
 
@@ -93,7 +95,7 @@ function Product() {
           </div>
 
           <button
-            onClick={() => addToCart(product._id, size)}
+            onClick={() => addToCart()}
             className="bg-black text-white px-8 py-3 text-sm active:bg-gray-700"
           >
             ADD TO CHART

@@ -1,7 +1,8 @@
 import axios from "axios";
 
 const http = axios.create({
-  baseURL: "http://localhost:4000",
+  baseURL: "https://ecommerce-backend-qxay.onrender.com/api/v1",
+  // baseURL: "http://localhost:4000/api/v1", //https://ecommerce-backend-qxay.onrender.com/api/v1
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -10,10 +11,15 @@ const http = axios.create({
 
 http.interceptors.request.use(
   (config) => {
-    let token = localStorage.getItem("token");
-    if (token) {
-      token = JSON.parse(token);
-      config.headers["Authorization"] = token;
+    let access_token = localStorage.getItem("access_token");
+    if (access_token) {
+      access_token = JSON.parse(access_token);
+      config.headers["access-token"] = access_token;
+    }
+    let refresh_token = localStorage.getItem("refresh_token");
+    if (refresh_token) {
+      refresh_token = JSON.parse(refresh_token);
+      config.headers["refresh-token"] = refresh_token;
     }
     return config;
   },
@@ -25,7 +31,7 @@ http.interceptors.request.use(
 http.interceptors.response.use(
   (response) => {
     // 处理响应数据
-    if (response.status === 200) {
+    if (response.status === 200 || response.status === 201) {
       return response.data; // 直接返回 data 部分
     } else {
       const errorMessage = response.data?.message || "请求失败";

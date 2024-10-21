@@ -1,6 +1,7 @@
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
-import productModel from "../models/productModel.js";
+import productModel from "../models/product.model.js";
+import { redis } from "../utils/redis.js";
 
 const addProduct = async (req, res) => {
   try {
@@ -20,13 +21,17 @@ const addProduct = async (req, res) => {
       images.map(async (item) => {
         let res = await cloudinary.uploader.upload(item.path, {
           resource_type: "image",
+          folder: "products",
         });
         fs.unlink(item.path, (err) => {
           if (err) {
             throw err;
           }
         });
-        return res.secure_url;
+        return {
+          public_id: res.public_id,
+          url: res.secure_url,
+        };
       })
     );
 
@@ -56,17 +61,8 @@ const addProduct = async (req, res) => {
 const listProduct = async (req, res) => {
   try {
     const products = await productModel.find({});
-    res.status(200).json({ data: products });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
 
-const removeProduct = async (req, res) => {
-  try {
-    const id = req.params.id;
-    await productModel.findByIdAndDelete(id);
-    res.status(200).json({ message: "Remove product successfully." });
+    res.status(200).json({ success: true, data: products });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -75,11 +71,20 @@ const removeProduct = async (req, res) => {
 const getProductById = async (req, res) => {
   try {
     const id = req.params.id;
+
+    const cacheProduct = redis.get(id);
+
+    if (cacheProduct) {
+      const product = JSON.parse(cacheProduct);
+      return res.status(200).json({ data: product, success: true });
+    }
+
     const product = await productModel.findById(id);
-    res.status(200).json({ data: product });
+    await redis.set(id, JSON.stringify(product), "EX", 7 * 24 * 60 * 60);
+    res.status(200).json({ data: product, success: true });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-export { addProduct, getProductById, removeProduct, listProduct };
+export { addProduct, getProductById, listProduct };

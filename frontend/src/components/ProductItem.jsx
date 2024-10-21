@@ -12,7 +12,7 @@ function ProductItem({ item }) {
       className="text-gray-700 cursor-pointer overflow-hidden"
     >
       <img
-        src={image[0]}
+        src={image[0].url}
         alt="image"
         className="hover:scale-110 transition-all ease-in-out"
       />

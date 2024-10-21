@@ -42,13 +42,9 @@ const Add = ({ token }) => {
         image3 && formData.append("images", image3);
         image4 && formData.append("images", image4);
 
-        const res = await axios.post(
-          backendUrl + "/api/product/add",
-          formData,
-          {
-            headers: { Authorization: token },
-          }
-        );
+        const res = await axios.post(backendUrl + "/product/add", formData, {
+          headers: { Authorization: token },
+        });
 
         if (res.status === 200) {
           toast.success(res.data.message);

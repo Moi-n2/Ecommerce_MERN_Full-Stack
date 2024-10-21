@@ -1,24 +1,33 @@
-import React, { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import Title from "../components/Title";
 import { ShopContext } from "../context/ShopContext";
-import { toast } from "react-toastify";
-import { get } from "../lib/axios";
 
 function Orders() {
-  const { orderData, currency, setOrderData } = useContext(ShopContext);
-
+  const { currency, user } = useContext(ShopContext);
+  const [orderData, setOrderData] = useState(null);
   useEffect(() => {
-    fetchOrderData();
-  }, []);
-
-  const fetchOrderData = async () => {
-    try {
-      const res = await get("/api/order/user");
-      setOrderData(res.data);
-    } catch (error) {
-      toast.error(error);
+    if (user.orders) {
+      setOrderData(user?.orders);
     }
+  }, [user]);
+
+  const totalQty = (cart) => {
+    return cart.reduce((acc, curr) => {
+      return acc + curr.quantity;
+    }, 0);
   };
+
+  const totalPayment = (cart) => {
+    return cart.reduce((acc, curr) => {
+      return acc + parseFloat(curr.quantity) * parseFloat(curr.product.price);
+    }, 0);
+  };
+
+  const formateTime = (time) => {
+    const date = new Date(time);
+    return date.toLocaleString();
+  };
+
   return (
     <div className="border-t pt-10">
       <div className="text-2xl">
@@ -32,27 +41,27 @@ function Orders() {
             className="py-4 border-t border-b text-gray-700 flex flex-col md:flex-row md:items-center md:justify-between gap-4 "
           >
             <div className="flex flex-col text-sm gap-6 flex-1">
-              {item.items.map((product) => (
+              {item.cart.map((cart) => (
                 <div
                   className="flex items-center gap-6 text-sm"
-                  key={product._id}
+                  key={cart.product._id}
                 >
                   <img
-                    src={product?.product?.image[0]}
+                    src={cart?.product?.image[0].url}
                     className="w-16 sm:w-20"
                     alt=""
                   />
                   <div className="space-y-3 flex-1 ml-5">
                     <p className="sm:text-base font-medium">
-                      {product?.product?.name}
+                      {cart?.product?.name}
                     </p>
                     <div className="flex items-center gap-5 mt-1 text-base text-gray-700">
                       <p>
                         Price:
-                        {currency} {product?.price} /pc
+                        {currency} {cart?.product?.price} /pc
                       </p>
-                      <p>Quantity: {product?.quantity}</p>
-                      <p>Size: {product?.size}</p>
+                      <p>Quantity: {cart?.quantity}</p>
+                      <p>Size: {cart?.size}</p>
                     </div>
                   </div>
                 </div>
@@ -61,29 +70,31 @@ function Orders() {
             </div>
 
             <div className="md:w-2/5 flex justify-between">
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <p className="mt-1 flex gap-2">
                   Date:
                   <span className="text-gray-400">
-                    {new Date(item.createAt).toDateString()}
+                    {formateTime(item.createdAt)}
                   </span>
                 </p>
                 <p className="mt-1 flex gap-2">
-                  Payment:
-                  <span className="text-gray-400">{item.payMethod}</span>
+                  Status:
+                  <span className="text-gray-400">{item.status}</span>
                 </p>
                 <p className="mt-1 flex gap-2">
                   TotalQuantity:
-                  <span className="text-gray-400">{item.totalQty}</span>
+                  <span className="text-gray-400">{totalQty(item.cart)}</span>
                 </p>
                 <p className="mt-1 flex gap-2">
                   TotalPayment:
-                  <span className="text-gray-400">{item.totalPayment}</span>
+                  <span className="text-gray-400">
+                    {currency} {totalPayment(item.cart)}
+                  </span>
                 </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <p className="min-w-2 h-2 rounded-full bg-green-500"></p>
-                <p className="text-sm md:text-base">{item.status}</p>
+                <p className="mt-1 flex gap-2">
+                  Address:
+                  <span className="text-gray-400">{item.address}</span>
+                </p>
               </div>
             </div>
           </div>

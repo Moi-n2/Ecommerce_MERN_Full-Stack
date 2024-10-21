@@ -1,4 +1,4 @@
-import { createContext, useEffect, useRef, useState } from "react";
+import { createContext, useEffect, useMemo, useRef, useState } from "react";
 import { ourPolicy } from "../assets/assets";
 import { useNavigate } from "react-router-dom";
 import { get, post } from "../lib/axios";
@@ -21,23 +21,56 @@ const title2 = {
 };
 
 const ShopContextProvider = ({ children }) => {
-  const [token, setToken] = useState("");
+  const [access_token, setAccessToken] = useState("");
+  const [refresh_token, setRefreshToken] = useState("");
   const [products, setProducts] = useState([]);
+  const [user, setUser] = useState(null);
+
+  const isAuthorized = useMemo(() => {
+    return !!access_token;
+  }, [access_token]);
 
   const navigate = useNavigate();
 
   useEffect(() => {
-    const userToken = localStorage.getItem("token");
-    if (userToken) {
-      setToken(JSON.parse(userToken));
+    const access_token = localStorage.getItem("access_token");
+    if (access_token) {
+      setAccessToken(JSON.parse(access_token));
+    }
+    const refresh_token = localStorage.getItem("refresh_token");
+    if (refresh_token) {
+      setRefreshToken(JSON.parse(refresh_token));
     }
 
     fetchProductList();
   }, []);
 
-  const [cartItems, setCartItems] = useState([]);
+  useEffect(() => {
+    if (isAuthorized) {
+      fetchUserData();
+    }
+  }, [isAuthorized]);
+
+  const fetchUserData = async () => {
+    try {
+      const res = await get("/me");
+      if (res.success) {
+        setUser(res.data);
+      }
+    } catch (error) {
+      toast.error(error);
+    }
+  };
+
   const [totalQty, setTotalQty] = useState(0);
-  const [orderData, setOrderData] = useState([]);
+
+  const [cartItems, setCartItems] = useState([]);
+
+  useEffect(() => {
+    if (user) {
+      setCartItems(user.cart);
+    }
+  }, [user]);
 
   useEffect(() => {
     const num = cartItems.reduce((acc, curr) => curr.quantity + acc, 0);
@@ -64,14 +97,19 @@ const ShopContextProvider = ({ children }) => {
     .slice(-5);
 
   const logout = () => {
-    setToken("");
-    localStorage.removeItem("token");
+    setAccessToken("");
+    setRefreshToken("");
+    setUser(null);
+    setCartItems([]);
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    toast.success("Logged out!");
     navigate("/");
   };
 
   const fetchProductList = async () => {
     try {
-      const res = await get("/api/product/");
+      const res = await get("/product");
       setProducts(res.data);
       setProductData(res.data);
     } catch (error) {
@@ -153,9 +191,16 @@ const ShopContextProvider = ({ children }) => {
     }
   };
 
+  const [payAddress, setPayAddress] = useState("");
+
   const value = {
-    token,
-    setToken,
+    user,
+    setUser,
+    isAuthorized,
+    refresh_token,
+    access_token,
+    setAccessToken,
+    setRefreshToken,
     logout,
     navigate,
     currency,
@@ -179,12 +224,10 @@ const ShopContextProvider = ({ children }) => {
     currentPage,
     listRef,
     cartItems,
-    setCartItems,
     delivery_fee,
     totalQty,
     setTotalQty,
-    orderData,
-    setOrderData,
+    setPayAddress,
   };
 
   return <ShopContext.Provider value={value}>{children}</ShopContext.Provider>;

@@ -2,15 +2,16 @@ import { useContext, useEffect, useState } from "react";
 import Title from "../components/Title";
 import { ShopContext } from "../context/ShopContext";
 import CartItem from "../components/CartItem";
-import { useNavigate } from "react-router-dom";
 import Address from "../components/Address";
 import { assets } from "../assets/assets";
 import { get, post } from "../lib/axios";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 function Cart() {
-  const { currency, cartItems, setCartItems, delivery_fee, totalQty } =
+  const { currency, cartItems, delivery_fee, user, setUser, setPayAddress } =
     useContext(ShopContext);
+  const navigate = useNavigate();
   const [payMethod, setPayMethod] = useState("cod");
   const [total, setTotal] = useState(0);
   const [address, setAddress] = useState({
@@ -24,45 +25,65 @@ function Cart() {
     country: "",
     phone: "",
   });
-  useEffect(() => {
-    fetchCart();
-  }, []);
 
   useEffect(() => {
     const total = cartItems.reduce((acc, curr) => {
       return acc + curr.quantity * curr.product.price;
     }, 0);
-    setTotal(total);
+    setTotal(total.toFixed(2));
   }, [cartItems, delivery_fee]);
 
-  const fetchCart = async () => {
-    try {
-      const res = await get("/api/cart/");
-      setCartItems(res.data);
-    } catch (error) {
-      toast.error(error);
+  useEffect(() => {
+    const defaultAddress = user?.address.find((item) => item.isDefault);
+    if (defaultAddress) {
+      setAddress(defaultAddress);
     }
-  };
+  }, [user?.address]);
 
   const checkOut = async () => {
-    let url = "/api/order/placeByCod";
-    if (payMethod === "stripe") {
-      url = "/api/order/placeByStripe";
+    console.log(user);
+
+    if (user.cart.length === 0) {
+      return toast.warning("Cart is empty!");
     }
+
+    const addressString = Object.entries(address)
+      .filter(([key]) => key !== "_id" && key !== "isDefault") // 过滤掉 _id
+      .map(([, value]) => value) // 仅获取值
+      .join(" ");
+
+    if (!addressString.trim()) {
+      return toast.warning("Address is empty!");
+    }
+
+    setPayAddress(addressString);
+
+    let url = "/order/create-mobile-order";
+    if (payMethod === "stripe") {
+      url = "/order/stripe-payment";
+      const res = await get(url);
+      if (res.success) {
+        const { session_url } = res.data;
+        window.location.replace(session_url);
+      }
+      return;
+    }
+
     const data = {
-      items: cartItems.map((item) => ({
-        product: item.product,
-        quantity: item.quantity,
-        size: item.size,
-        price: item.product.price,
-      })),
-      totalQty: totalQty,
-      totalPayment: total,
-      address: address,
+      status: "Cash on delivery",
+      address: addressString,
     };
+
     try {
       const res = await post(url, data);
-      toast.success(res.message);
+      if (res.success) {
+        console.log("res:", res);
+
+        toast.success(res.message);
+        navigate("/orders");
+        setUser(res.data);
+      }
+      console.log("res:", res);
     } catch (error) {
       toast.error(error);
     }
@@ -108,7 +129,8 @@ function Cart() {
                 <b>Total</b>
                 <b>
                   {currency}
-                  {total + delivery_fee}
+                  {(parseFloat(total) * 100 + parseFloat(delivery_fee) * 100) /
+                    100}
                 </b>
               </div>
             </div>

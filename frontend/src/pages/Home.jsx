@@ -3,7 +3,7 @@ import Hero from "../components/Hero";
 import Gallery from "../components/Gallery";
 import { ShopContext } from "../context/ShopContext";
 import Policy from "../components/Policy";
-import Subscribe from "../components/subscribe";
+import Subscribe from "../components/Subscribe";
 
 function Home() {
   const { latesProducts, bestSellerProdcuts, title1, title2, ourPolicy } =

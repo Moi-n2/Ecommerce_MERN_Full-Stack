@@ -1,7 +1,7 @@
 import { createContext, useEffect, useMemo, useRef, useState } from "react";
 import { ourPolicy } from "../assets/assets";
 import { useNavigate } from "react-router-dom";
-import { get, post } from "../lib/axios";
+import { get } from "../lib/axios";
 import { toast } from "react-toastify";
 
 export const ShopContext = createContext();

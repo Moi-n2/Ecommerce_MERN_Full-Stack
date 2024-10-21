@@ -1,7 +1,7 @@
 import React from "react";
 import Title from "../components/Title";
 import { assets } from "../assets/assets";
-import Subscribe from "../components/subscribe";
+import Subscribe from "../components/Subscribe";
 
 function About() {
   return (
